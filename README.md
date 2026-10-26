@@ -4,7 +4,7 @@
 
 ### Experimental Active Noise Cancellation for **any** headphones
 
-![version](https://img.shields.io/badge/version-0.2-00C896?style=for-the-badge)
+![version](https://img.shields.io/badge/version-0.3-00C896?style=for-the-badge)
 ![platform](https://img.shields.io/badge/Android-8.0%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 ![kotlin](https://img.shields.io/badge/Kotlin-Compose-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
 ![status](https://img.shields.io/badge/status-test%20build-FFC107?style=for-the-badge)
@@ -48,7 +48,8 @@ Simulated fan hum: ~9 dB reduction with exact latency, ~6 dB with 0.2 ms error. 
 | 🎚️ **Tuning** | Strength, low-pass cut-off, latency trim. |
 | 🌙 **Themes** | Light, dark or follow system. |
 | 🔄 **Background mode** | Optional foreground service keeps ANC alive with the screen off. |
-| 🛡️ **Safety guard** | Refuses to start (and stops) without headphones, to avoid speaker feedback. |
+| 🎙️ **Multi-mic** | Phone mic plus optional camera mics (rear / front direction), averaged. Device-dependent. |
+| 🛡️ **Output guard** | Only **USB, 3.5 mm jack or Bluetooth media (A2DP)** outputs. The actual audio route is checked continuously; ANC stops if audio lands on the phone speaker. |
 
 ## ⚠️ Read this first
 
@@ -81,5 +82,6 @@ APKs live in [`Release/`](Release) and carry the version in their name: `0Sound-
 
 ## 🧪 Version
 
+**0.3** – multiple microphones (incl. camera mics), output-device recognition and live route guard.
 **0.2** – adaptive predictor, latency calibration, trim, algorithm selector.
 **0.1** – first test build.

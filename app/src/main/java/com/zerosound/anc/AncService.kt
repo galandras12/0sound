@@ -12,7 +12,9 @@ import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,7 +27,7 @@ class AncService : Service() {
 
     private val deviceCallback = object : AudioDeviceCallback() {
         override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>) {
-            if (!hasHeadphones(audioManager)) {
+            if (AudioRoutes.find(audioManager) == null) {
                 _message.value = R.string.msg_headphones_removed
                 shutDown()
             }
@@ -44,10 +46,17 @@ class AncService : Service() {
             return START_NOT_STICKY
         }
         startForegroundCompat()
-        if (!hasHeadphones(audioManager)) {
+        if (AudioRoutes.find(audioManager) == null) {
             _message.value = R.string.msg_need_headphones
             shutDown()
-        } else if (!engine.start()) {
+        } else if (!engine.start(
+                onRoute = { _outputLabel.value = AudioRoutes.label(applicationContext, it) },
+                onRouteRejected = {
+                    _message.value = R.string.msg_route_rejected
+                    Handler(Looper.getMainLooper()).post { shutDown() }
+                },
+            )
+        ) {
             _message.value = R.string.msg_engine_failed
             shutDown()
         } else {
@@ -62,6 +71,7 @@ class AncService : Service() {
         runCatching { audioManager.unregisterAudioDeviceCallback(deviceCallback) }
         engine.stop()
         _running.value = false
+        _outputLabel.value = null
         super.onDestroy()
     }
 
@@ -113,6 +123,10 @@ class AncService : Service() {
         private val _message = MutableStateFlow<Int?>(null)
         val message: StateFlow<Int?> = _message
 
+        /** Label of the device the audio is actually routed to while ANC runs. */
+        private val _outputLabel = MutableStateFlow<String?>(null)
+        val outputLabel: StateFlow<String?> = _outputLabel
+
         fun clearMessage() {
             _message.value = null
         }
@@ -124,19 +138,6 @@ class AncService : Service() {
         fun stop(context: Context) {
             context.stopService(Intent(context, AncService::class.java))
             _running.value = false
-        }
-
-        fun hasHeadphones(am: AudioManager): Boolean =
-            am.getDevices(AudioManager.GET_DEVICES_OUTPUTS).any { it.type in HEADPHONE_TYPES }
-
-        private val HEADPHONE_TYPES = buildSet {
-            add(AudioDeviceInfo.TYPE_WIRED_HEADPHONES)
-            add(AudioDeviceInfo.TYPE_WIRED_HEADSET)
-            add(AudioDeviceInfo.TYPE_BLUETOOTH_A2DP)
-            add(AudioDeviceInfo.TYPE_USB_HEADSET)
-            add(AudioDeviceInfo.TYPE_USB_DEVICE)
-            add(AudioDeviceInfo.TYPE_HEARING_AID)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) add(AudioDeviceInfo.TYPE_BLE_HEADSET)
         }
     }
 }

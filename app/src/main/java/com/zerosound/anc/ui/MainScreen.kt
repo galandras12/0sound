@@ -56,6 +56,8 @@ import kotlin.math.roundToInt
 @Composable
 fun MainScreen(
     running: Boolean,
+    outputLabel: String?,
+    micCount: Int,
     onToggle: (Boolean) -> Unit,
     onOpenSettings: () -> Unit,
 ) {
@@ -106,12 +108,29 @@ fun MainScreen(
                 fontWeight = FontWeight.Medium,
             )
             Spacer(Modifier.height(6.dp))
-            Text(
-                stringResource(R.string.hint_headphones),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 13.sp,
-                textAlign = TextAlign.Center,
-            )
+            if (outputLabel != null) {
+                Text(
+                    stringResource(R.string.output_detected, outputLabel),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center,
+                )
+                if (running && micCount > 0) {
+                    Text(
+                        stringResource(R.string.mics_active, micCount),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            } else {
+                Text(
+                    stringResource(R.string.output_none),
+                    color = WarnYellow,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center,
+                )
+            }
             if (adaptive && latency <= 0f) {
                 Spacer(Modifier.height(10.dp))
                 Text(

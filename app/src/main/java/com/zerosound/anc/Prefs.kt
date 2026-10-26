@@ -15,6 +15,9 @@ object Prefs {
     private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
     private val _strength = MutableStateFlow(0.6f)
     private val _cutoffHz = MutableStateFlow(500f)
+    private val _micMain = MutableStateFlow(true)
+    private val _micCameraBack = MutableStateFlow(false)
+    private val _micCameraFront = MutableStateFlow(false)
     private val _adaptive = MutableStateFlow(true)
     private val _latencyMs = MutableStateFlow(0f)
     private val _trimMs = MutableStateFlow(0f)
@@ -23,6 +26,11 @@ object Prefs {
     val themeMode: StateFlow<ThemeMode> = _themeMode
     val strength: StateFlow<Float> = _strength
     val cutoffHz: StateFlow<Float> = _cutoffHz
+
+    /** Microphone selection; several can be active at once and are averaged. */
+    val micMain: StateFlow<Boolean> = _micMain
+    val micCameraBack: StateFlow<Boolean> = _micCameraBack
+    val micCameraFront: StateFlow<Boolean> = _micCameraFront
 
     /** true: adaptive predictor (hum / tonal noise); false: plain phase inversion. */
     val adaptive: StateFlow<Boolean> = _adaptive
@@ -41,6 +49,9 @@ object Prefs {
             .getOrDefault(ThemeMode.SYSTEM)
         _strength.value = p.getFloat("strength", 0.6f)
         _cutoffHz.value = p.getFloat("cutoff", 500f)
+        _micMain.value = p.getBoolean("mic_main", true)
+        _micCameraBack.value = p.getBoolean("mic_cam_back", false)
+        _micCameraFront.value = p.getBoolean("mic_cam_front", false)
         _adaptive.value = p.getBoolean("adaptive", true)
         _latencyMs.value = p.getFloat("latency", 0f)
         _trimMs.value = p.getFloat("trim", 0f)
@@ -79,5 +90,20 @@ object Prefs {
     fun setTrimMs(v: Float) {
         _trimMs.value = v
         sp?.edit()?.putFloat("trim", v)?.apply()
+    }
+
+    fun setMicMain(v: Boolean) {
+        _micMain.value = v
+        sp?.edit()?.putBoolean("mic_main", v)?.apply()
+    }
+
+    fun setMicCameraBack(v: Boolean) {
+        _micCameraBack.value = v
+        sp?.edit()?.putBoolean("mic_cam_back", v)?.apply()
+    }
+
+    fun setMicCameraFront(v: Boolean) {
+        _micCameraFront.value = v
+        sp?.edit()?.putBoolean("mic_cam_front", v)?.apply()
     }
 }

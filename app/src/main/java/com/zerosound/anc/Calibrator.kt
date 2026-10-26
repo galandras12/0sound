@@ -62,23 +62,18 @@ object Calibrator {
         for (m in warm until warm + burstLen) out[m] = (rnd.nextFloat() * 2f - 1f) * BURST_LEVEL
         val mic = FloatArray(out.size)
 
-        val buf = ShortArray(frame)
+        val chunk = FloatArray(frame)
         try {
-            io.recorder.startRecording()
-            io.track.play()
+            io.start()
             var pos = 0
             while (pos + frame <= out.size) {
-                var got = 0
-                while (got < frame) {
-                    val n = io.recorder.read(buf, got, frame - got)
-                    if (n <= 0) return CalState.Failed(R.string.cal_failed_audio)
-                    got += n
-                }
-                for (i in 0 until frame) mic[pos + i] = buf[i] / 32768f
-                // same cadence as the ANC loop: write the frame that belongs to the frame just read
-                val w = ShortArray(frame) { (out[pos + it] * 32767f).toInt().toShort() }
-                io.track.write(w, 0, frame)
-                pos += frame
+                val n = io.read(chunk)
+                if (n <= 0) return CalState.Failed(R.string.cal_failed_audio)
+                for (i in 0 until n) mic[pos + i] = chunk[i]
+                // same cadence as the ANC loop: write the samples that belong to the ones just read
+                val w = ShortArray(n) { (out[pos + it] * 32767f).toInt().toShort() }
+                io.track.write(w, 0, n)
+                pos += n
             }
         } finally {
             io.release()

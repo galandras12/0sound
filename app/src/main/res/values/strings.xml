@@ -7,10 +7,30 @@
     <string name="warning_bottom">Use at your own risk only.</string>
     <string name="state_on">Anti-noise is playing</string>
     <string name="state_off">Noise cancellation is off</string>
-    <string name="hint_headphones">Connect your headphones before switching on.</string>
+    <string name="output_detected">Output: %1$s</string>
+    <string name="output_none">No supported output detected. Connect USB, jack or Bluetooth (media) headphones.</string>
+    <string name="mics_active">Microphones in use: %1$d</string>
+    <string name="route_jack">Wired headphones (3.5 mm jack)</string>
+    <string name="route_usb">USB audio</string>
+    <string name="route_bt">Bluetooth audio (media)</string>
+    <string name="route_ble">Bluetooth LE audio</string>
+    <string name="route_hearing">Hearing aid</string>
+    <string name="route_speaker">Phone speaker</string>
+    <string name="route_earpiece">Phone earpiece</string>
+    <string name="route_other">Other audio output</string>
+
+    <string name="section_mics">Microphones</string>
+    <string name="mic_main">Phone microphone</string>
+    <string name="mic_main_desc">The main built-in microphone (unprocessed when available).</string>
+    <string name="mic_cam_back">Camera microphone – rear direction</string>
+    <string name="mic_cam_back_desc">Microphone aimed away from you, as used for rear-camera video.</string>
+    <string name="mic_cam_front">Camera microphone – front direction</string>
+    <string name="mic_cam_front_desc">Microphone aimed towards you, as used for selfie video.</string>
+    <string name="mics_note">Several microphones are averaged, which lowers microphone self-noise. Direction control and extra microphones depend on the phone and may be ignored. Applies the next time ANC is switched on; recalibrate afterwards.</string>
 
     <string name="msg_need_mic">Microphone permission is required to listen to the ambient noise.</string>
-    <string name="msg_need_headphones">Connect headphones first. Without them the anti-noise would play from the speaker and cause feedback.</string>
+    <string name="msg_need_headphones">No supported output found. ANC works only with a USB, 3.5 mm jack or Bluetooth (media / A2DP) audio device — never with the phone speaker, where it would cause feedback.</string>
+    <string name="msg_route_rejected">The audio is playing on the phone speaker or an unsupported output. ANC stopped.</string>
     <string name="msg_headphones_removed">Headphones disconnected. ANC stopped.</string>
     <string name="msg_engine_failed">Could not start the audio engine on this device.</string>
 

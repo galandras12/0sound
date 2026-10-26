@@ -2,6 +2,8 @@ package com.zerosound.anc
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.media.AudioDeviceCallback
+import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
@@ -19,11 +21,28 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.flow.MutableStateFlow
 import com.zerosound.anc.ui.MainScreen
 import com.zerosound.anc.ui.SettingsScreen
 import com.zerosound.anc.ui.ZeroSoundTheme
 
 class MainActivity : ComponentActivity() {
+    private val detectedOutput = MutableStateFlow<String?>(null)
+    private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
+    private val deviceCallback = object : AudioDeviceCallback() {
+        override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>) = refreshOutput()
+        override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>) = refreshOutput()
+    }
+
+    private fun refreshOutput() {
+        detectedOutput.value = AudioRoutes.find(audioManager)?.let { AudioRoutes.label(this, it) }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        refreshOutput()
+        audioManager.registerAudioDeviceCallback(deviceCallback, null)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,6 +55,9 @@ class MainActivity : ComponentActivity() {
             val theme by Prefs.themeMode.collectAsState()
             val running by AncService.running.collectAsState()
             val message by AncService.message.collectAsState()
+            val detected by detectedOutput.collectAsState()
+            val routed by AncService.outputLabel.collectAsState()
+            val mics by AncEngine.micCount.collectAsState()
             var inSettings by rememberSaveable { mutableStateOf(false) }
 
             LaunchedEffect(message) {
@@ -75,6 +97,8 @@ class MainActivity : ComponentActivity() {
                 } else {
                     MainScreen(
                         running = running,
+                        outputLabel = if (running) routed ?: detected else detected,
+                        micCount = if (running) mics else 0,
                         onToggle = { on ->
                             if (!on) {
                                 AncService.stop(this)
@@ -99,6 +123,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
+        audioManager.unregisterAudioDeviceCallback(deviceCallback)
         if (!isChangingConfigurations && !Prefs.runInBackground.value && AncService.running.value) {
             AncService.stop(this)
         }
@@ -109,7 +134,7 @@ class MainActivity : ComponentActivity() {
 
     private fun tryCalibrate() {
         val am = getSystemService(AUDIO_SERVICE) as AudioManager
-        if (!AncService.hasHeadphones(am)) {
+        if (AudioRoutes.find(am) == null) {
             Toast.makeText(this, R.string.msg_need_headphones, Toast.LENGTH_LONG).show()
             return
         }
@@ -119,7 +144,7 @@ class MainActivity : ComponentActivity() {
 
     private fun tryStart() {
         val am = getSystemService(AUDIO_SERVICE) as AudioManager
-        if (!AncService.hasHeadphones(am)) {
+        if (AudioRoutes.find(am) == null) {
             Toast.makeText(this, R.string.msg_need_headphones, Toast.LENGTH_LONG).show()
             return
         }

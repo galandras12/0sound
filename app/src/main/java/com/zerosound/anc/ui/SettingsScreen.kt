@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,6 +51,9 @@ fun SettingsScreen(onBack: () -> Unit, onCalibrate: () -> Unit) {
     val theme by Prefs.themeMode.collectAsState()
     val strength by Prefs.strength.collectAsState()
     val cutoff by Prefs.cutoffHz.collectAsState()
+    val micMain by Prefs.micMain.collectAsState()
+    val micBack by Prefs.micCameraBack.collectAsState()
+    val micFront by Prefs.micCameraFront.collectAsState()
     val adaptive by Prefs.adaptive.collectAsState()
     val latency by Prefs.latencyMs.collectAsState()
     val trim by Prefs.trimMs.collectAsState()
@@ -93,6 +97,14 @@ fun SettingsScreen(onBack: () -> Unit, onCalibrate: () -> Unit) {
             ThemeOption(R.string.theme_system, theme == ThemeMode.SYSTEM) { Prefs.setThemeMode(ThemeMode.SYSTEM) }
             ThemeOption(R.string.theme_light, theme == ThemeMode.LIGHT) { Prefs.setThemeMode(ThemeMode.LIGHT) }
             ThemeOption(R.string.theme_dark, theme == ThemeMode.DARK) { Prefs.setThemeMode(ThemeMode.DARK) }
+
+            Divider()
+            Section(R.string.section_mics)
+            val selected = listOf(micMain, micBack, micFront).count { it }
+            MicOption(R.string.mic_main, R.string.mic_main_desc, micMain, enabled = !(micMain && selected == 1)) { Prefs.setMicMain(it) }
+            MicOption(R.string.mic_cam_back, R.string.mic_cam_back_desc, micBack, enabled = !(micBack && selected == 1)) { Prefs.setMicCameraBack(it) }
+            MicOption(R.string.mic_cam_front, R.string.mic_cam_front_desc, micFront, enabled = !(micFront && selected == 1)) { Prefs.setMicCameraFront(it) }
+            Text(stringResource(R.string.mics_note), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
 
             Divider()
             Section(R.string.section_algorithm)
@@ -181,6 +193,22 @@ private fun AlgoOption(title: Int, desc: Int, selected: Boolean, onSelect: () ->
         verticalAlignment = Alignment.Top,
     ) {
         RadioButton(selected = selected, onClick = null)
+        Column(Modifier.padding(start = 12.dp)) {
+            Text(stringResource(title), color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(desc), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+        }
+    }
+}
+
+@Composable
+private fun MicOption(title: Int, desc: Int, checked: Boolean, enabled: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().padding(vertical = 6.dp).selectable(
+            selected = checked, enabled = enabled, role = Role.Checkbox, onClick = { onChange(!checked) },
+        ),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Checkbox(checked = checked, onCheckedChange = null, enabled = enabled)
         Column(Modifier.padding(start = 12.dp)) {
             Text(stringResource(title), color = MaterialTheme.colorScheme.onBackground)
             Text(stringResource(desc), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
