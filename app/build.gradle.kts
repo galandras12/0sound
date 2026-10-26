@@ -70,4 +70,10 @@ tasks.register<Copy>("exportReleaseApk") {
     from(layout.buildDirectory.file("outputs/apk/release/app-release.apk"))
     into(rootProject.layout.projectDirectory.dir("Release"))
     rename { "0Sound-v$versionName.apk" }
+    // Release/ always holds only the latest APK: remove older versions first.
+    doFirst {
+        rootProject.layout.projectDirectory.dir("Release").asFile
+            .listFiles { f -> f.name.matches(Regex("0Sound-v.*\\.apk")) }
+            ?.forEach { it.delete() }
+    }
 }

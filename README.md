@@ -78,7 +78,7 @@ Builds are signed with a **test certificate** (`app/keystore/0sound-test.jks`, p
 
 ## 📦 Releases
 
-APKs live in [`Release/`](Release) and carry the version in their name: `0Sound-v<version>.apk`.
+[`Release/`](Release) always holds the **latest** APK only, with the version in its name: `0Sound-v<version>.apk`.
 
 ## 🧪 Version
 
