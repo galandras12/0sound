@@ -4,7 +4,7 @@
 
 ### Experimental Active Noise Cancellation for **any** headphones
 
-![version](https://img.shields.io/badge/version-0.3-00C896?style=for-the-badge)
+![version](https://img.shields.io/badge/version-0.3.1-00C896?style=for-the-badge)
 ![platform](https://img.shields.io/badge/Android-8.0%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 ![kotlin](https://img.shields.io/badge/Kotlin-Compose-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
 ![status](https://img.shields.io/badge/status-test%20build-FFC107?style=for-the-badge)
@@ -82,6 +82,7 @@ Builds are signed with a **test certificate** (`app/keystore/0sound-test.jks`, p
 
 ## 🧪 Version
 
+**0.3.1** – calibration fix (polarity-independent, robust detection, diagnostics).
 **0.3** – multiple microphones (incl. camera mics), output-device recognition and live route guard.
 **0.2** – adaptive predictor, latency calibration, trim, algorithm selector.
 **0.1** – first test build.

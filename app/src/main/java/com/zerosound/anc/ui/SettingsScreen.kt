@@ -121,7 +121,7 @@ fun SettingsScreen(onBack: () -> Unit, onCalibrate: () -> Unit) {
             Spacer(Modifier.height(8.dp))
             val status = when (val c = cal) {
                 is CalState.Running -> stringResource(R.string.cal_running)
-                is CalState.Failed -> stringResource(c.reason)
+                is CalState.Failed -> stringResource(c.reason) + if (c.detail.isNotEmpty()) "\n(${c.detail})" else ""
                 is CalState.Done -> stringResource(R.string.cal_result, c.latencyMs)
                 CalState.Idle -> if (latency > 0f) stringResource(R.string.cal_result, latency) else stringResource(R.string.cal_none)
             }

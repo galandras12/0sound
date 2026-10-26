@@ -6,13 +6,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.Random
 import kotlin.math.abs
+import kotlin.math.log10
 import kotlin.math.sqrt
 
 sealed interface CalState {
     data object Idle : CalState
     data object Running : CalState
     data class Done(val latencyMs: Float) : CalState
-    data class Failed(@StringRes val reason: Int) : CalState
+    data class Failed(@StringRes val reason: Int, val detail: String = "") : CalState
 }
 
 /**
@@ -29,7 +30,7 @@ object Calibrator {
     private const val WARMUP_S = 3.0f
     private const val BURST_S = 0.6f
     private const val TAIL_S = 0.4f
-    private const val MAX_LAG_MS = 200
+    private const val MAX_LAG_MS = 300
     private const val BURST_LEVEL = 0.3f
 
     fun reset() {
@@ -84,40 +85,46 @@ object Calibrator {
         for (i in mic.indices) mic[i] -= dc
 
         val maxLag = MAX_LAG_MS * sr / 1000
+        val est = estimateLatency(out, mic, warm, burstLen, maxLag)
+        val micRms = sqrt(mic.sumOf { it.toDouble() * it } / mic.size).toFloat()
+        val detail = "Mic level: %.0f dBFS, match: %.1f".format(20 * log10(micRms.coerceAtLeast(1e-6f)), est.confidence)
+        if (est.confidence < MIN_CONFIDENCE) return CalState.Failed(R.string.cal_failed_weak, detail)
+
+        val ms = est.lagSamples * 1000f / sr
+        Prefs.setLatencyMs(ms)
+        return CalState.Done(ms)
+    }
+
+    class Estimate(val lagSamples: Float, val confidence: Float)
+
+    /**
+     * Cross-correlates the played burst with the recording. The sign of the correlation is irrelevant
+     * (the acoustic coupling may invert polarity), so the largest |correlation| wins. Confidence is the
+     * peak over a robust (median based) noise estimate, which a spread-out transducer response cannot inflate.
+     */
+    internal fun estimateLatency(out: FloatArray, mic: FloatArray, start: Int, len: Int, maxLag: Int): Estimate {
         val corr = FloatArray(maxLag + 1)
         for (lag in 0..maxLag) {
             var s = 0f
-            val end = warm + burstLen
-            for (m in warm until end) s += out[m] * mic[m + lag]
+            for (m in start until start + len) s += out[m] * mic[m + lag]
             corr[lag] = s
         }
-
         var best = 0
-        for (lag in 1..maxLag) if (corr[lag] > corr[best]) best = lag
-        var sumSq = 0.0
-        var cnt = 0
-        for (lag in 0..maxLag) {
-            if (abs(lag - best) > 40) {
-                sumSq += corr[lag].toDouble() * corr[lag]
-                cnt++
-            }
-        }
-        val rms = sqrt(sumSq / cnt.coerceAtLeast(1)).toFloat()
-        val confidence = if (rms > 0f) corr[best] / rms else 0f
-        if (corr[best] <= 0f || confidence < MIN_CONFIDENCE) return CalState.Failed(R.string.cal_failed_weak)
+        for (lag in 1..maxLag) if (abs(corr[lag]) > abs(corr[best])) best = lag
+        val sorted = corr.map { abs(it) }.sorted()
+        val sigma = (sorted[sorted.size / 2] / 0.6745f).coerceAtLeast(1e-9f)
+        val confidence = abs(corr[best]) / sigma
 
-        // parabolic interpolation for sub-sample accuracy
+        // parabolic interpolation on |corr| for sub-sample accuracy
         var exact = best.toFloat()
         if (best in 1 until maxLag) {
-            val a = corr[best - 1]
-            val b = corr[best]
-            val c = corr[best + 1]
+            val a = abs(corr[best - 1])
+            val b = abs(corr[best])
+            val c = abs(corr[best + 1])
             val d = a - 2 * b + c
             if (d != 0f) exact += 0.5f * (a - c) / d
         }
-        val ms = exact * 1000f / sr
-        Prefs.setLatencyMs(ms)
-        return CalState.Done(ms)
+        return Estimate(exact, confidence)
     }
 
     private const val MIN_CONFIDENCE = 6f
