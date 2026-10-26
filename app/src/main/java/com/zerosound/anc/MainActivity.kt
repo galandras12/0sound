@@ -45,12 +45,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            var pendingCalibration by rememberSaveable { mutableStateOf(false) }
             val permissionLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestMultiplePermissions(),
             ) { result ->
                 if (result[Manifest.permission.RECORD_AUDIO] == true) {
-                    tryStart()
+                    if (pendingCalibration) tryCalibrate() else tryStart()
+                    pendingCalibration = false
                 } else {
+                    pendingCalibration = false
                     Toast.makeText(this, R.string.msg_need_mic, Toast.LENGTH_LONG).show()
                 }
             }
@@ -58,7 +61,17 @@ class MainActivity : ComponentActivity() {
             ZeroSoundTheme(theme) {
                 if (inSettings) {
                     BackHandler { inSettings = false }
-                    SettingsScreen(onBack = { inSettings = false })
+                    SettingsScreen(
+                        onBack = { inSettings = false },
+                        onCalibrate = {
+                            if (hasMicPermission()) {
+                                tryCalibrate()
+                            } else {
+                                pendingCalibration = true
+                                permissionLauncher.launch(arrayOf(Manifest.permission.RECORD_AUDIO))
+                            }
+                        },
+                    )
                 } else {
                     MainScreen(
                         running = running,
@@ -93,6 +106,16 @@ class MainActivity : ComponentActivity() {
 
     private fun hasMicPermission() =
         ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+
+    private fun tryCalibrate() {
+        val am = getSystemService(AUDIO_SERVICE) as AudioManager
+        if (!AncService.hasHeadphones(am)) {
+            Toast.makeText(this, R.string.msg_need_headphones, Toast.LENGTH_LONG).show()
+            return
+        }
+        AncService.stop(this) // free the audio path
+        Calibrator.run()
+    }
 
     private fun tryStart() {
         val am = getSystemService(AUDIO_SERVICE) as AudioManager

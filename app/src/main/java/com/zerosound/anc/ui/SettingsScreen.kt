@@ -17,6 +17,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,17 +37,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zerosound.anc.BuildConfig
+import com.zerosound.anc.CalState
+import com.zerosound.anc.Calibrator
 import com.zerosound.anc.Prefs
 import com.zerosound.anc.R
 import com.zerosound.anc.ThemeMode
 import kotlin.math.roundToInt
 
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, onCalibrate: () -> Unit) {
     val bg by Prefs.runInBackground.collectAsState()
     val theme by Prefs.themeMode.collectAsState()
     val strength by Prefs.strength.collectAsState()
     val cutoff by Prefs.cutoffHz.collectAsState()
+    val adaptive by Prefs.adaptive.collectAsState()
+    val latency by Prefs.latencyMs.collectAsState()
+    val trim by Prefs.trimMs.collectAsState()
+    val cal by Calibrator.state.collectAsState()
 
     Column(
         Modifier
@@ -86,6 +93,31 @@ fun SettingsScreen(onBack: () -> Unit) {
             ThemeOption(R.string.theme_system, theme == ThemeMode.SYSTEM) { Prefs.setThemeMode(ThemeMode.SYSTEM) }
             ThemeOption(R.string.theme_light, theme == ThemeMode.LIGHT) { Prefs.setThemeMode(ThemeMode.LIGHT) }
             ThemeOption(R.string.theme_dark, theme == ThemeMode.DARK) { Prefs.setThemeMode(ThemeMode.DARK) }
+
+            Divider()
+            Section(R.string.section_algorithm)
+            AlgoOption(R.string.algo_adaptive, R.string.algo_adaptive_desc, adaptive) { Prefs.setAdaptive(true) }
+            AlgoOption(R.string.algo_basic, R.string.algo_basic_desc, !adaptive) { Prefs.setAdaptive(false) }
+
+            Divider()
+            Section(R.string.section_calibration)
+            Text(stringResource(R.string.cal_desc), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = onCalibrate, enabled = cal !is CalState.Running) {
+                Text(stringResource(R.string.cal_button))
+            }
+            Spacer(Modifier.height(8.dp))
+            val status = when (val c = cal) {
+                is CalState.Running -> stringResource(R.string.cal_running)
+                is CalState.Failed -> stringResource(c.reason)
+                is CalState.Done -> stringResource(R.string.cal_result, c.latencyMs)
+                CalState.Idle -> if (latency > 0f) stringResource(R.string.cal_result, latency) else stringResource(R.string.cal_none)
+            }
+            Text(status, color = MaterialTheme.colorScheme.onBackground, fontSize = 14.sp)
+            Spacer(Modifier.height(8.dp))
+            Text(stringResource(R.string.cal_trim, trim), color = MaterialTheme.colorScheme.onBackground)
+            Slider(value = trim, onValueChange = { Prefs.setTrimMs((it * 20).roundToInt() / 20f) }, valueRange = -3f..3f)
+            Text(stringResource(R.string.cal_trim_desc), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
 
             Divider()
             Section(R.string.section_tuning)
@@ -139,5 +171,19 @@ private fun ThemeOption(label: Int, selected: Boolean, onSelect: () -> Unit) {
     ) {
         RadioButton(selected = selected, onClick = null)
         Text(stringResource(label), color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(start = 12.dp, top = 10.dp, bottom = 10.dp))
+    }
+}
+
+@Composable
+private fun AlgoOption(title: Int, desc: Int, selected: Boolean, onSelect: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().selectable(selected = selected, role = Role.RadioButton, onClick = onSelect).padding(vertical = 6.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        RadioButton(selected = selected, onClick = null)
+        Column(Modifier.padding(start = 12.dp)) {
+            Text(stringResource(title), color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(desc), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+        }
     }
 }

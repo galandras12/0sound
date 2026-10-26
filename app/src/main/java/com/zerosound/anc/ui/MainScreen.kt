@@ -26,6 +26,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
+import com.zerosound.anc.Prefs
 import com.zerosound.anc.R
 import kotlin.math.roundToInt
 
@@ -57,6 +59,8 @@ fun MainScreen(
     onToggle: (Boolean) -> Unit,
     onOpenSettings: () -> Unit,
 ) {
+    val latency by Prefs.latencyMs.collectAsState()
+    val adaptive by Prefs.adaptive.collectAsState()
     Column(
         Modifier
             .fillMaxSize()
@@ -108,6 +112,15 @@ fun MainScreen(
                 fontSize = 13.sp,
                 textAlign = TextAlign.Center,
             )
+            if (adaptive && latency <= 0f) {
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    stringResource(R.string.hint_not_calibrated),
+                    color = WarnYellow,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
 
         NoticeRow(

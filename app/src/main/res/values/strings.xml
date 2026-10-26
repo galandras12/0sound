@@ -26,7 +26,25 @@
     <string name="section_tuning">Tuning</string>
     <string name="tuning_strength">Anti-noise strength</string>
     <string name="tuning_cutoff">Low-pass cut-off</string>
-    <string name="tuning_desc">Phone-side processing has latency, so only low frequencies can be cancelled. Start low and raise the strength carefully.</string>
+    <string name="tuning_desc">Only low frequencies can be cancelled. The media volume also scales the anti-noise. Start low and raise the strength carefully.</string>
+
+    <string name="section_algorithm">Algorithm</string>
+    <string name="algo_adaptive">Adaptive predictor (recommended)</string>
+    <string name="algo_adaptive_desc">Learns steady, periodic noise such as fan hum and compensates the loop latency. Needs calibration.</string>
+    <string name="algo_basic">Basic phase inversion</string>
+    <string name="algo_basic_desc">Simple inverted copy of the noise. Only works when the latency is very low.</string>
+
+    <string name="section_calibration">Latency calibration</string>
+    <string name="cal_desc">Hold one ear cup of your headphones tightly against the phone microphone (do NOT wear them), then press the button. After 3 seconds a short noise burst is played to measure the exact loop latency. Recalibrate whenever you change headphones or connection type.</string>
+    <string name="cal_button">Calibrate now</string>
+    <string name="cal_running">Measuring… keep the ear cup on the microphone.</string>
+    <string name="cal_result">Measured loop latency: %1$.2f ms</string>
+    <string name="cal_none">Not calibrated yet.</string>
+    <string name="cal_failed_audio">Could not open the audio path.</string>
+    <string name="cal_failed_weak">The burst was not heard clearly. Hold the ear cup closer to the microphone, raise the media volume a bit and try again.</string>
+    <string name="cal_trim">Fine trim: %1$.2f ms</string>
+    <string name="cal_trim_desc">If the hum is still audible, slowly move the trim while ANC is on and listen for the quietest point.</string>
+    <string name="hint_not_calibrated">Not calibrated. Open Settings and run the latency calibration for best results.</string>
 
     <string name="section_about">About</string>
     <string name="about_text">0Sound v%1$s — experimental test build, signed with a test certificate.</string>

@@ -14,12 +14,22 @@ object Prefs {
     private val _runInBackground = MutableStateFlow(false)
     private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
     private val _strength = MutableStateFlow(0.6f)
-    private val _cutoffHz = MutableStateFlow(700f)
+    private val _cutoffHz = MutableStateFlow(500f)
+    private val _adaptive = MutableStateFlow(true)
+    private val _latencyMs = MutableStateFlow(0f)
+    private val _trimMs = MutableStateFlow(0f)
 
     val runInBackground: StateFlow<Boolean> = _runInBackground
     val themeMode: StateFlow<ThemeMode> = _themeMode
     val strength: StateFlow<Float> = _strength
     val cutoffHz: StateFlow<Float> = _cutoffHz
+
+    /** true: adaptive predictor (hum / tonal noise); false: plain phase inversion. */
+    val adaptive: StateFlow<Boolean> = _adaptive
+
+    /** Measured loop latency in ms; 0 = not calibrated yet. */
+    val latencyMs: StateFlow<Float> = _latencyMs
+    val trimMs: StateFlow<Float> = _trimMs
 
     @Synchronized
     fun init(context: Context) {
@@ -30,7 +40,10 @@ object Prefs {
         _themeMode.value = runCatching { ThemeMode.valueOf(p.getString("theme", "")!!) }
             .getOrDefault(ThemeMode.SYSTEM)
         _strength.value = p.getFloat("strength", 0.6f)
-        _cutoffHz.value = p.getFloat("cutoff", 700f)
+        _cutoffHz.value = p.getFloat("cutoff", 500f)
+        _adaptive.value = p.getBoolean("adaptive", true)
+        _latencyMs.value = p.getFloat("latency", 0f)
+        _trimMs.value = p.getFloat("trim", 0f)
     }
 
     fun setRunInBackground(v: Boolean) {
@@ -51,5 +64,20 @@ object Prefs {
     fun setCutoffHz(v: Float) {
         _cutoffHz.value = v
         sp?.edit()?.putFloat("cutoff", v)?.apply()
+    }
+
+    fun setAdaptive(v: Boolean) {
+        _adaptive.value = v
+        sp?.edit()?.putBoolean("adaptive", v)?.apply()
+    }
+
+    fun setLatencyMs(v: Float) {
+        _latencyMs.value = v
+        sp?.edit()?.putFloat("latency", v)?.apply()
+    }
+
+    fun setTrimMs(v: Float) {
+        _trimMs.value = v
+        sp?.edit()?.putFloat("trim", v)?.apply()
     }
 }
